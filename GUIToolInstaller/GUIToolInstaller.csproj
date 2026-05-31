@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net8.0</TargetFrameworks>
+        <LangVersion>14</LangVersion>
+
+        <PackageId>GUIToolsInstaller</PackageId>
+        <Title>GUI Tools Installer</Title>
+        <Authors>simonegli8</Authors>
+        <Company>Estrellas de Esperanza</Company>
+        <Description>A cross platform GUI tool installer.</Description>
+        <Copyright>Estrellas de Esperanza</Copyright>
+        <PackageProjectUrl>https://github.com/simonegli8/GUIToolInstaller</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/simonegli8/GUIToolInstaller</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>GUI tools installer, dotnet tools, installer</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <IncludeSymbols>true</IncludeSymbols>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <ToolCommandName>guitoolstest</ToolCommandName>
+        <PackageOutputPath>../nupkg</PackageOutputPath>
+        <IncludeBuildOutput>true</IncludeBuildOutput>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <FileVersion>1.0.0.0</FileVersion>
+        <Version>1.0.0.0</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="WindowsShortcutFactory" Version="1.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Resources\" />
+    </ItemGroup>
+    
+</Project>

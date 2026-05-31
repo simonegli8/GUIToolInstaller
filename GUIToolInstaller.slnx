@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="GUIToolInstaller/GUIToolInstaller.csproj" />
+  <Project Path="GUIToolIntallerTest/GUIToolIntallerTest.csproj" />
+</Solution>
