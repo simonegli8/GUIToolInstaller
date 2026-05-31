@@ -6,7 +6,6 @@
         {
             if (GUIToolInstaller.Installer.Run(args, "TestTool", "TestTool")) return;
             Console.WriteLine("Hello, World!");
-
         }
     }
 }

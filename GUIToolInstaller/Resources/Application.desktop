@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name={{AppName}}
+Comment={{AppDescription}}
+Icon=/usr/share/pixmaps/{{AppIcon}}.png
+Exec={{AppExe}}
+Terminal=false
+Type=Application
+Categories=Utility
+GenericName={{AppId}}
+Keywords={{AppId}}

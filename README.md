@@ -8,4 +8,10 @@ to start your tool. Likewise it can be uninstalled by calling `yourtool uninstal
 In order to make this work, you must include the following code in your Program.cs
 
 ```
-public void
+public void Main(string[] args) {
+	if (GUIToolInstaller.Installer.Run(args, "Application Name", "ApplicationIcon", "1.0.0", "Description describing the application")) return;
+
+	... your other code here ...
+
+}
+```

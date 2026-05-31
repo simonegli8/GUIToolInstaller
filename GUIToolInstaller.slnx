@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/Scripts/">
+    <File Path="CreatePackages.bat" />
+    <File Path="NugetApiKey.txt" />
+    <File Path="PushToNuget.bat" />
+    <File Path="README.md" />
+  </Folder>
   <Project Path="GUIToolInstaller/GUIToolInstaller.csproj" />
-  <Project Path="GUIToolIntallerTest/GUIToolIntallerTest.csproj" />
+  <Project Path="GUIToolInstallerTest/GUIToolInstallerTest.csproj" />
 </Solution>

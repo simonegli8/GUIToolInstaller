@@ -32,7 +32,13 @@ public class Installer
 
     public string AppName;
     public string AppIcon;
-
+    public string AppVersion;
+    public string AppShortVersion => Regex.Match(AppVersion, @"[0-9]+\.[0-9]+").Value;
+    public string AppDescription;
+    public string AppId => Regex.Replace(AppName, "[- .&]", "");
+    public string AppExe => Regex.IsMatch(ToolExe, @"dotnet(\.exe)?$") ?
+        $"{ToolExe} \"{Environment.GetCommandLineArgs()[0]}\"" :
+        ToolExe;
     public void SaveResource(string resource, string path, bool isText = true)
     {
         Directory.CreateDirectory(path);
@@ -54,8 +60,13 @@ public class Installer
                 using (var reader = new StreamReader(stream))
                 {
                     var text = reader.ReadToEnd()
-                        .Replace("${AppName}", AppName)
-                        .Replace("${AppIcon}", AppIcon);
+                        .Replace("{{AppName}}", AppName)
+                        .Replace("{{AppIcon}}", AppIcon)
+                        .Replace("{{AppId}}", AppId)
+                        .Replace("{{AppVersion}}", AppVersion)
+                        .Replace("{{AppShortVersion}}", AppShortVersion)
+                        .Replace("{{AppDescription}}", AppDescription)
+                        .Replace("{{AppExe}}", AppExe);
                     if (!OSInfo.IsWindows) text = text.Replace("\r\n", "\n");
                     else text = Regex.Replace(text, "(?<!\r)\n", "\r\n");
                     File.WriteAllText(dest, text);
@@ -129,7 +140,7 @@ public class Installer
             SaveText($"{AppName}.desktop", applications);
         } catch (FileNotFoundException) {
             SaveText("Application.desktop", tmp);
-            File.Move(Path.Combine(tmp, "Application.desktop"), Path.Combine(applications, $"{AppName}.desktop"));
+            File.Move(Path.Combine(tmp, "Application.desktop"), Path.Combine(applications, $"{AppName}.desktop"), true);
         }
         SaveBinary($"{AppIcon}.png", pixmaps);
     }
@@ -139,7 +150,7 @@ public class Installer
         var pixmaps = "/usr/share/pixmaps";
         var applications = "/usr/share/applications";
         var desktop = Path.Combine(applications, $"{AppName}.desktop");
-        var icon = Path.Combine(pixmaps, $"{AppName}.png");
+        var icon = Path.Combine(pixmaps, $"{AppIcon}.png");
         if (File.Exists (desktop)) File.Delete(desktop);
         if (File.Exists(icon)) File.Delete(icon);
     }
@@ -165,7 +176,8 @@ public class Installer
         Directory.Delete(path, true);
     }
 
-    public static bool Run(string[] args, string appName, string iconName)
+    public static bool Run(string[] args, string appName, string iconName,
+        string version = "1.0.0", string description = "")
     {
         if (args.Length > 0 && args[0].EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) args = args.Skip(1).ToArray();
 
@@ -173,17 +185,20 @@ public class Installer
         {
             if (args[0] == "install")
             {
-                var installer = new Installer() { AppName = appName, AppIcon = iconName };
+                var installer = new Installer() { AppName = appName, AppIcon = iconName,
+                    AppDescription = description, AppVersion = version };
                 if (OSInfo.IsWindows) installer.InstallWindows();
                 else if (OSInfo.IsLinux) installer.InstallLinux();
                 else if (OSInfo.IsMac) installer.InstallMac();
-                Console.WriteLine($"{appName} installed.");
+                Console.WriteLine($"{appName} installed. You can uninstall by running '{installer.ToolExe} uninstall'.");
                 return true;
             }
             else if (args[0] == "uninstall")
             {
-                var installer = new Installer() { AppName = appName, AppIcon = iconName };
-                if (OSInfo.IsWindows) installer.UninstallWindows();
+                var installer = new Installer() { AppName = appName, AppIcon = iconName,
+                    AppDescription = description, AppVersion = version }
+            ;
+            if (OSInfo.IsWindows) installer.UninstallWindows();
                 else if (OSInfo.IsLinux) installer.UninstallLinux();
                 else if (OSInfo.IsMac) installer.UninstallMac();
                 Console.WriteLine($"{appName} uninstalled.");

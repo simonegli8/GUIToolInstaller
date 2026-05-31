@@ -23,17 +23,18 @@
         <ToolCommandName>guitoolstest</ToolCommandName>
         <PackageOutputPath>../nupkg</PackageOutputPath>
         <IncludeBuildOutput>true</IncludeBuildOutput>
-        <AssemblyVersion>1.0.0.0</AssemblyVersion>
-        <FileVersion>1.0.0.0</FileVersion>
-        <Version>1.0.0.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="WindowsShortcutFactory" Version="1.0.0" />
+      <None Remove="Resources\Application.desktop" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Resources\" />
+      <EmbeddedResource Include="Resources\Application.desktop" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="WindowsShortcutFactory" Version="1.0.0" />
     </ItemGroup>
     
 </Project>
