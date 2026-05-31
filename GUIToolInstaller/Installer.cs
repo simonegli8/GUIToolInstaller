@@ -132,7 +132,7 @@ public class Installer
 
     public void RestartAsRoot()
     {
-        if (OSInfo.IsLinux)
+        if (OSInfo.IsLinux || OSInfo.IsMac)
         {
             if (Unix.getuid() != 0)
             {
@@ -167,6 +167,8 @@ public class Installer
 
     public void UninstallLinux()
     {
+        RestartAsRoot();
+
         var pixmaps = "/usr/share/pixmaps";
         var applications = "/usr/share/applications";
         var desktop = Path.Combine(applications, $"{AppId}.desktop");
@@ -177,6 +179,8 @@ public class Installer
 
     public void InstallMac()
     {
+        RestartAsRoot();
+
         var path = Applications;
         var name = AppId;
         path = Path.Combine(path, name + ".app");
@@ -190,6 +194,8 @@ public class Installer
 
     public void UninstallMac()
     {
+        RestartAsRoot();
+
         var path = Applications;
         var name = AppId;
         path = Path.Combine(path, name + ".app");
@@ -203,26 +209,31 @@ public class Installer
 
         if (args.Length > 0)
         {
-            if (args[0] == "install")
+            try {
+                if (args[0] == "install")
+                {
+                    var installer = new Installer() { AppName = appName, AppIcon = iconName,
+                        AppDescription = description, AppVersion = version };
+                    if (OSInfo.IsWindows) installer.InstallWindows();
+                    else if (OSInfo.IsLinux) installer.InstallLinux();
+                    else if (OSInfo.IsMac) installer.InstallMac();
+                    Console.WriteLine($"{appName} installed. You can uninstall by running '{installer.ToolExe} uninstall'.");
+                    return true;
+                }
+                else if (args[0] == "uninstall")
+                {
+                    var installer = new Installer() { AppName = appName, AppIcon = iconName,
+                        AppDescription = description, AppVersion = version }
+                ;
+                    if (OSInfo.IsWindows) installer.UninstallWindows();
+                    else if (OSInfo.IsLinux) installer.UninstallLinux();
+                    else if (OSInfo.IsMac) installer.UninstallMac();
+                    Console.WriteLine($"{appName} uninstalled.");
+                    return true;
+                }
+            } catch (Exception ex)
             {
-                var installer = new Installer() { AppName = appName, AppIcon = iconName,
-                    AppDescription = description, AppVersion = version };
-                if (OSInfo.IsWindows) installer.InstallWindows();
-                else if (OSInfo.IsLinux) installer.InstallLinux();
-                else if (OSInfo.IsMac) installer.InstallMac();
-                Console.WriteLine($"{appName} installed. You can uninstall by running '{installer.ToolExe} uninstall'.");
-                return true;
-            }
-            else if (args[0] == "uninstall")
-            {
-                var installer = new Installer() { AppName = appName, AppIcon = iconName,
-                    AppDescription = description, AppVersion = version }
-            ;
-            if (OSInfo.IsWindows) installer.UninstallWindows();
-                else if (OSInfo.IsLinux) installer.UninstallLinux();
-                else if (OSInfo.IsMac) installer.UninstallMac();
-                Console.WriteLine($"{appName} uninstalled.");
-                return true;
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
         return false;
