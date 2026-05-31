@@ -130,8 +130,28 @@ public class Installer
         Directory.Delete(path, true);
     }
 
+    public void RestartAsRoot()
+    {
+        if (OSInfo.IsLinux)
+        {
+            if (Unix.getuid() != 0)
+            {
+               
+                var commandLine = Environment.CommandLine;
+                Console.WriteLine("Installation must run as Administrator.");
+                Console.WriteLine("Please provide your password:");
+                var password = Console.ReadLine();
+                var shell = Shell.Standard.ExecAsync($"sudo -S {commandLine}");
+                shell.Input.WriteLine(password);
+                shell.Wait();
+            }
+        }
+    }
+
     public void InstallLinux()
     {
+        RestartAsRoot();
+
         var pixmaps = "/usr/share/pixmaps";
         var applications = "/usr/share/applications";
         var tmp = "/tmp";
