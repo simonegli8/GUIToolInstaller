@@ -129,19 +129,48 @@ public class Installer
         if (File.Exists(startMenuShortcut)) File.Delete(startMenuShortcut);
         Directory.Delete(path, true);
     }
+    public string ReadPassword()
+    {
+        var password = new System.Text.StringBuilder();
 
+        while (true)
+        {
+            var key = Console.ReadKey(intercept: true);
+
+            if (key.Key == ConsoleKey.Enter)
+            {
+                Console.WriteLine();
+                break;
+            }
+
+            if (key.Key == ConsoleKey.Backspace && password.Length > 0)
+            {
+                password.Length--;
+                Console.Write("\b \b"); // erase last *
+            }
+            else if (!char.IsControl(key.KeyChar))
+            {
+                password.Append(key.KeyChar);
+                Console.Write("*");
+            }
+        }
+
+        return password.ToString();
+    }
     public void RestartAsRoot()
     {
         if (OSInfo.IsLinux || OSInfo.IsMac)
         {
             if (Unix.getuid() != 0)
             {
-               
                 var commandLine = Environment.CommandLine;
                 Console.WriteLine("Installation must run as Administrator.");
                 Console.WriteLine("Please provide your password:");
-                var password = Console.ReadLine();
-                var shell = Shell.Standard.ExecAsync($"sudo -S {commandLine}");
+                var password = ReadPassword();
+                var shell = Shell.Standard.Clone;
+                shell.LogOutput += msg => Console.WriteLine(msg);
+                shell.LogError += msg => Console.Error.WriteLine(msg);
+                shell = Shell.Standard.Clone.ExecAsync($"sudo -S {commandLine}");
                 shell.Input.WriteLine(password);
                 shell.Wait();
             }
@@ -202,8 +231,8 @@ public class Installer
         Directory.Delete(path, true);
     }
 
-    public static bool Run(string[] args, string appName, string iconName,
-        string version = "1.0.0", string description = "")
+    public static bool Run(string[] args, string appName, string iconName = null,
+        string description = "", string version = null)
     {
         if (args.Length > 0 && args[0].EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) args = args.Skip(1).ToArray();
 
@@ -212,6 +241,12 @@ public class Installer
             try {
                 if (args[0] == "install")
                 {
+                    if (string.IsNullOrEmpty(version))
+                    {
+                        var assembly = GetCallerAssembly();
+                        version = assembly.GetName().Version.ToString(3);
+                    }
+                    if (string.IsNullOrEmpty(iconName)) iconName = appName;
                     var installer = new Installer() { AppName = appName, AppIcon = iconName,
                         AppDescription = description, AppVersion = version };
                     if (OSInfo.IsWindows) installer.InstallWindows();
@@ -222,9 +257,14 @@ public class Installer
                 }
                 else if (args[0] == "uninstall")
                 {
+                    if (string.IsNullOrEmpty(version))
+                    {
+                        var assembly = GetCallerAssembly();
+                        version = assembly.GetName().Version.ToString(3);
+                    }
+                    if (string.IsNullOrEmpty(iconName)) iconName = appName;
                     var installer = new Installer() { AppName = appName, AppIcon = iconName,
-                        AppDescription = description, AppVersion = version }
-                ;
+                        AppDescription = description, AppVersion = version };
                     if (OSInfo.IsWindows) installer.UninstallWindows();
                     else if (OSInfo.IsLinux) installer.UninstallLinux();
                     else if (OSInfo.IsMac) installer.UninstallMac();
@@ -234,6 +274,7 @@ public class Installer
             } catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
+                return true;
             }
         }
         return false;

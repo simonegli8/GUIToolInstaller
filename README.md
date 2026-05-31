@@ -11,7 +11,7 @@ In order to make this work, you must include the following code in your Program.
 ```
 public void Main(string[] args) {
 	if (GUIToolInstaller.Installer.Run(args, "Application Name", "ApplicationIcon",
-		"1.0.0", "Description describing the application")) return;
+		"Description describing the application")) return;
 
 	... your other code here ...
 
