@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net8.0</TargetFrameworks>
+        <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
         <LangVersion>14</LangVersion>
 
         <PackageId>GUIToolsInstaller</PackageId>
@@ -20,11 +20,16 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-        <ToolCommandName>guitoolstest</ToolCommandName>
         <PackageOutputPath>../nupkg</PackageOutputPath>
         <IncludeBuildOutput>true</IncludeBuildOutput>
+        <PackageReadmeFile Condition="$(PackAsTool) == 'true'">tools/$(TargetFramework)/any/README.md</PackageReadmeFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
+    <ItemGroup>
+        <PackageReference Include="WindowsShortcutFactory" Version="1.0.0" />
+    </ItemGroup>
+    
     <ItemGroup>
       <None Remove="Resources\Application.desktop" />
     </ItemGroup>
@@ -32,9 +37,8 @@
     <ItemGroup>
       <EmbeddedResource Include="Resources\Application.desktop" />
     </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="WindowsShortcutFactory" Version="1.0.0" />
-    </ItemGroup>
     
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="" />
+    </ItemGroup>
 </Project>
