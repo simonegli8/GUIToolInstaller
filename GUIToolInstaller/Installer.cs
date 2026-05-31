@@ -42,7 +42,7 @@ public class Installer
     public void SaveResource(string resource, string path, bool isText = true)
     {
         Directory.CreateDirectory(path);
-        var assemblies = new[] { Assembly.GetExecutingAssembly(), GetCallerAssembly() };
+        var assemblies = new[] { GetCallerAssembly(), Assembly.GetExecutingAssembly() };
         var resnames = assemblies.SelectMany(a => a.GetManifestResourceNames()
             .Select(name => new
             {
@@ -106,7 +106,7 @@ public class Installer
 
     public void InstallWindows()
     {
-        var path = Path.Combine(ProgramFiles, AppName);
+        var path = Path.Combine(ProgramFiles, AppId);
         SaveBinary($"{AppIcon}.ico", path);
         var shortcut = new WindowsShortcut()
         {
@@ -114,17 +114,17 @@ public class Installer
             Path = ToolExe,
             ShowCommand = ProcessWindowStyle.Normal
         };
-        shortcut.Save(Path.Combine(path, AppName + ".lnk"));
+        shortcut.Save(Path.Combine(path, AppId + ".lnk"));
         var startMenu = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
-        shortcut.Save(Path.Combine(startMenu, AppName + ".lnk"));
+        shortcut.Save(Path.Combine(startMenu, AppId + ".lnk"));
     }
 
     public void UninstallWindows()
     {
-        var path = Path.Combine(ProgramFiles, AppName);
-        var shortcut = Path.Combine(path, AppName + ".lnk");
+        var path = Path.Combine(ProgramFiles, AppId);
+        var shortcut = Path.Combine(path, AppId + ".lnk");
         var startMenu = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
-        var startMenuShortcut = Path.Combine(startMenu, AppName + ".lnk");
+        var startMenuShortcut = Path.Combine(startMenu, AppId + ".lnk");
         if (File.Exists(shortcut)) File.Delete(shortcut);
         if (File.Exists(startMenuShortcut)) File.Delete(startMenuShortcut);
         Directory.Delete(path, true);
@@ -137,10 +137,10 @@ public class Installer
         var tmp = "/tmp";
         try
         {
-            SaveText($"{AppName}.desktop", applications);
+            SaveText($"{AppId}.desktop", applications);
         } catch (FileNotFoundException) {
             SaveText("Application.desktop", tmp);
-            File.Move(Path.Combine(tmp, "Application.desktop"), Path.Combine(applications, $"{AppName}.desktop"), true);
+            File.Move(Path.Combine(tmp, "Application.desktop"), Path.Combine(applications, $"{AppId}.desktop"), true);
         }
         SaveBinary($"{AppIcon}.png", pixmaps);
     }
@@ -149,7 +149,7 @@ public class Installer
     {
         var pixmaps = "/usr/share/pixmaps";
         var applications = "/usr/share/applications";
-        var desktop = Path.Combine(applications, $"{AppName}.desktop");
+        var desktop = Path.Combine(applications, $"{AppId}.desktop");
         var icon = Path.Combine(pixmaps, $"{AppIcon}.png");
         if (File.Exists (desktop)) File.Delete(desktop);
         if (File.Exists(icon)) File.Delete(icon);
@@ -158,7 +158,7 @@ public class Installer
     public void InstallMac()
     {
         var path = Applications;
-        var name = AppName;
+        var name = AppId;
         path = Path.Combine(path, name + ".app");
         var contents = Path.Combine(path, "Contents");
         var MacOS = Path.Combine(contents, "MacOS");
@@ -171,7 +171,7 @@ public class Installer
     public void UninstallMac()
     {
         var path = Applications;
-        var name = AppName;
+        var name = AppId;
         path = Path.Combine(path, name + ".app");
         Directory.Delete(path, true);
     }
