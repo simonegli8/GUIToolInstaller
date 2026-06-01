@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
-        <PackageId>GUIToolsInstallerTest</PackageId>
+        <PackageId>GUIToolInstallerTest</PackageId>
         <Title>GUI Tools Installer Test</Title>
         <Authors>simonegli8</Authors>
         <Company>Estrellas de Esperanza</Company>
@@ -24,15 +24,12 @@
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
         <ToolCommandName>guitoolstest</ToolCommandName>
         <PackageOutputPath>../nupkg</PackageOutputPath>
-        <IncludeBuildOutput>true</IncludeBuildOutput>
+        <!--<IncludeBuildOutput>true</IncludeBuildOutput>-->
         <PackAsTool Condition="$(PackAsTool) == ''">true</PackAsTool>
         <PackageReadmeFile Condition="$(PackAsTool) == 'true'">tools/$(TargetFramework)/any/README.md</PackageReadmeFile>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <!--<DebugType>embedded</DebugType>-->
     </PropertyGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\GUIToolInstaller\GUIToolInstaller.csproj" />
-    </ItemGroup>
 
     <ItemGroup>
         <None Remove="Resources\TestTool.icns" />
@@ -52,5 +49,9 @@
 
     <ItemGroup>
         <None Include="..\README.md" Pack="true" PackagePath="" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\GUIToolInstaller\GUIToolInstaller.csproj" />
     </ItemGroup>
 </Project>

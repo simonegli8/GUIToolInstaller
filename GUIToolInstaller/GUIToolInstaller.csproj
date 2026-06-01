@@ -4,7 +4,7 @@
         <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
         <LangVersion>14</LangVersion>
 
-        <PackageId>GUIToolsInstaller</PackageId>
+        <PackageId>GUIToolInstaller</PackageId>
         <Title>GUI Tools Installer</Title>
         <Authors>simonegli8</Authors>
         <Company>Estrellas de Esperanza</Company>
@@ -24,6 +24,7 @@
         <IncludeBuildOutput>true</IncludeBuildOutput>
         <PackageReadmeFile Condition="$(PackAsTool) == 'true'">tools/$(TargetFramework)/any/README.md</PackageReadmeFile>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <DebugType>embedded</DebugType>
     </PropertyGroup>
 
     <ItemGroup>

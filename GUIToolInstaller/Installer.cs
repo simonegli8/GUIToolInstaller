@@ -13,7 +13,7 @@ namespace GUIToolInstaller;
 
 public class Installer
 {
-    public static Assembly? GetCallerAssembly(int skipFrames = 2)
+    public static Assembly? GetCallerAssembly(int skipFrames = 1)
     {
         var stack = new StackTrace();
         Assembly current = null;
@@ -129,8 +129,13 @@ public class Installer
         if (File.Exists(startMenuShortcut)) File.Delete(startMenuShortcut);
         Directory.Delete(path, true);
     }
+
+    public static bool HasConsole => !Console.IsInputRedirected;
+
     public string ReadPassword()
     {
+        if (!HasConsole) return Console.ReadLine();
+
         var password = new System.Text.StringBuilder();
 
         while (true)
@@ -163,16 +168,34 @@ public class Installer
         {
             if (Unix.getuid() != 0)
             {
-                var commandLine = Environment.CommandLine;
+                var arguments = Environment.CommandLine
+                    .Replace(" -debug", "");
+                var cmd = Environment.ProcessPath;
                 Console.WriteLine("Installation must run as Administrator.");
-                Console.WriteLine("Please provide your password:");
-                var password = ReadPassword();
+                const string PasswordToken = "###Enter Password###";
                 var shell = Shell.Standard.Clone;
-                shell.LogOutput += msg => Console.WriteLine(msg);
-                shell.LogError += msg => Console.Error.WriteLine(msg);
-                shell = Shell.Standard.Clone.ExecAsync($"sudo -S {commandLine}");
-                shell.Input.WriteLine(password);
-                shell.Wait();
+                shell.FlushOutput = text => text.Contains('\n') || text.Contains(PasswordToken);
+                shell.LogOutput += msg => Console.Write(msg);
+                bool wasPasswordToken = false;
+                shell.LogError += msg =>
+                {
+                    if (msg.Contains(PasswordToken))
+                    {
+                        wasPasswordToken = true;
+                        Console.Write("Please provide your password: ");
+                        var password = ReadPassword();
+                        shell.Input.WriteLine(password);
+                    }
+                    else if (!wasPasswordToken) Console.Error.Write(msg);
+                    else wasPasswordToken = false;
+                };
+                var cmdWithPath = shell.Find(cmd) ?? cmd;
+                shell = shell.ExecAsync($"sudo -S -p \"###Enter Password###\" \"{cmdWithPath}\" {arguments}");
+                shell.Wait(TimeSpan.FromMinutes(1));
+                Environment.Exit(shell.ExitCode().Result);
+            } else
+            {
+                //Console.WriteLine("Running as root.");
             }
         }
     }

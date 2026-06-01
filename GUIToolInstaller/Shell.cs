@@ -67,6 +67,8 @@ public abstract class Shell
     public virtual char PathSeparator => Path.PathSeparator;
     public bool CreateNoWindow = true;
     public bool UseShellExecute = false;
+    public Func<string, bool> FlushOutput;
+    public bool ManualOutputRead => FlushOutput != null;
     public string User { get; set; }
     public string Password { get; set; }
     public virtual string WorkingDirectory { get; set; } = null;
@@ -183,13 +185,14 @@ public abstract class Shell
         return secure;
     }
 
+    const string SudoPrompt = "### Password ###:";
     //public virtual StreamWriter StandardInput => Process?.StandardInput;
     public virtual Shell ExecAsync(string cmd, Encoding encoding = null, Dictionary<string, string> environment = null)
     {
         bool impersonate = !IsWindows && !string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Password);
         if (impersonate)
         {
-            var sudocmd = $"sudo -u {User} ";
+            var sudocmd = $"sudo -S -u {User} -p \"{SudoPrompt}\"";
             cmd = sudocmd + cmd;
         }
         var parent = this;
@@ -238,6 +241,12 @@ public abstract class Shell
         if (cmdWithPath != null)
         {
             var child = Clone;
+            if (impersonate)
+            {
+                child.RedirectOutput = true;
+                var oldflush = child.FlushOutput;
+                child.FlushOutput = text => oldflush?.Invoke(text) == true || text.Contains(SudoPrompt);
+            }
             CompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
             child.CompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
             hasProcessExited = errorEOF = outputEOF = child.hasProcessExited = child.errorEOF = child.outputEOF = false;
@@ -268,7 +277,7 @@ public abstract class Shell
                     process.StartInfo.LoadUserProfile = true;
                 }
             }
-            if (RedirectOutput)
+            if (child.RedirectOutput)
             {
                 process.StartInfo.StandardOutputEncoding = encoding ?? Encoding ?? Encoding.Default;
                 process.StartInfo.StandardErrorEncoding = encoding ?? Encoding ?? Encoding.Default;
@@ -331,22 +340,40 @@ public abstract class Shell
                     }
                 }
             };
-            if (!RedirectOutput)
+            if (!child.RedirectOutput)
             {
                 errorEOF = outputEOF = child.errorEOF = child.outputEOF = true;
             }
             process.Start();
-            if (RedirectOutput)
+            if (child.RedirectOutput)
             {
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
+                if (!ManualOutputRead)
+                {
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                }
+                else
+                {
+                    BeginManulaRead(process.StandardOutput, child, false);
+                    BeginManulaRead(process.StandardError, child, true);
+                }
                 process.StandardInput.AutoFlush = true;
+                if (impersonate)
+                {
+                    LogError += text =>
+                    {
+                        if (text.Contains(SudoPrompt))
+                        {
+                            try
+                            {
+                                Input.WriteLine(Password);
+                            }
+                            catch { }
+                        }
+                    };
+                }
             }
-            else if (impersonate)
-            {
-                process.StandardInput.AutoFlush = true;
-            }
-            if (impersonate) Input.WriteLine(Password);
+
             return child;
         }
         else
@@ -362,6 +389,45 @@ public abstract class Shell
             return child;
         }
     }
+
+    private void BeginManulaRead(StreamReader reader, Shell child, bool error)
+    {
+        var stream = new MemoryStream();
+        var flush = FlushOutput;
+        _ = System.Threading.Tasks.Task.Run(async () =>
+        {
+            const int len = 1;
+            var buffer = new byte[len];
+            while ((await reader.BaseStream.ReadAsync(buffer, 0, len)) > 0)
+            {
+                stream.Write(buffer, 0, len);
+                var text = Encoding.UTF8.GetString(stream.ToArray());
+                if (text.Length > 0 && text[text.Length - 1] != '\uFFFD' && flush(text))
+                {
+                    var shell = child;
+                    while (shell != null)
+                    {
+                        shell.Log?.Invoke(text);
+                        if (!error) shell.LogOutput?.Invoke(text);
+                        if (error) shell.LogError?.Invoke(text);
+                        shell = shell.Parent;
+                    }
+                    stream.SetLength(0);
+                }
+            }
+            if (!error)
+            {
+                outputEOF = child.outputEOF = true;
+            }
+            if (error)
+            {
+                errorEOF = child.errorEOF = true;
+            }
+            child.CheckCompleted();
+            CheckCompleted();
+        });
+    }
+
     public virtual Shell Exec(string command, Encoding encoding = null, Dictionary<string, string> environment = null)
     {
         return ExecAsync(command, encoding, environment).Wait();
@@ -382,6 +448,7 @@ public abstract class Shell
             clone.Password = this.Password;
             clone.Environment = new Dictionary<string, string>();
             foreach (var item in this.Environment) clone.Environment.Add(item.Key, item.Value);
+            clone.FlushOutput = this.FlushOutput;
 
             return clone;
         }
@@ -429,11 +496,11 @@ public abstract class Shell
     }
 
     /* public virtual async Task<Shell> Wait(int milliseconds = Timeout.Infinite)
-{
-    if (milliseconds == Timeout.Infinite) Process.WaitForExit();
-    else Process.WaitForExit(milliseconds);
-    return await this;
-} */
+		{
+			if (milliseconds == Timeout.Infinite) Process.WaitForExit();
+			else Process.WaitForExit(milliseconds);
+			return await this;
+		} */
 
     public Action<string> Log { get; set; }
     public Action<string> LogCommand { get; set; }
@@ -643,8 +710,13 @@ public abstract class Shell
     static Shell standard = null;
     public static Shell Standard => standard ??= new StandardShell();
 
-    public static Shell Default => Standard;
+#if ProvidersBase
+    public static Shell Default => OSInfo.Current.DefaultShell;
     public static bool IsWindows => OSInfo.IsWindows;
+#else
+    public readonly static Shell Default = new StandardShell(); // OSInfo.Current.DefaultShell;
+    public static bool IsWindows => System.Environment.OSVersion.Platform == PlatformID.Win32NT;
+#endif
 }
 
 public class StandardShell : Shell
