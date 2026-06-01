@@ -275,7 +275,7 @@ public class Installer
                     if (OSInfo.IsWindows) installer.InstallWindows();
                     else if (OSInfo.IsLinux) installer.InstallLinux();
                     else if (OSInfo.IsMac) installer.InstallMac();
-                    Console.WriteLine($"{appName} installed. You can uninstall by running '{installer.ToolExe} uninstall'.");
+                    Console.WriteLine($"{appName} installed. You can uninstall by running '{Path.GetFileName(installer.ToolExe)} uninstall'.");
                     return true;
                 }
                 else if (args[0] == "uninstall")
