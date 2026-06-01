@@ -122,12 +122,15 @@ public class Installer
     public void UninstallWindows()
     {
         var path = Path.Combine(ProgramFiles, AppId);
-        var shortcut = Path.Combine(path, AppId + ".lnk");
-        var startMenu = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
-        var startMenuShortcut = Path.Combine(startMenu, AppId + ".lnk");
-        if (File.Exists(shortcut)) File.Delete(shortcut);
-        if (File.Exists(startMenuShortcut)) File.Delete(startMenuShortcut);
-        Directory.Delete(path, true);
+        if (Directory.Exists(path))
+        {
+            var shortcut = Path.Combine(path, AppId + ".lnk");
+            var startMenu = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
+            var startMenuShortcut = Path.Combine(startMenu, AppId + ".lnk");
+            if (File.Exists(shortcut)) File.Delete(shortcut);
+            if (File.Exists(startMenuShortcut)) File.Delete(startMenuShortcut);
+            Directory.Delete(path, true);
+        }
     }
 
     public static bool HasConsole => !Console.IsInputRedirected;
@@ -246,12 +249,15 @@ public class Installer
 
     public void UninstallMac()
     {
-        RestartAsRoot();
-
         var path = Applications;
-        var name = AppId;
-        path = Path.Combine(path, name + ".app");
-        Directory.Delete(path, true);
+        if (Directory.Exists(path))
+        {
+            RestartAsRoot();
+
+            var name = AppId;
+            path = Path.Combine(path, name + ".app");
+            Directory.Delete(path, true);
+        }
     }
 
     public static bool Run(string[] args, string appName, string iconName = null,
